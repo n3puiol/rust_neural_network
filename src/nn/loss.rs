@@ -1,23 +1,27 @@
-pub(crate) trait Loss {
-    fn loss(&self, outputs: &Vec<f64>, targets: &Vec<f64>) -> f64;
+use crate::nn::utils::Vector;
 
-    fn gradient(&self, outputs: &Vec<f64>, targets: &Vec<f64>) -> Vec<f64> {
-        let mut gradient = Vec::new();
-        for (output, target) in outputs.iter().zip(targets.iter()) {
-            gradient.push(output - target);
-        }
-        gradient
-    }
+pub(crate) trait Loss {
+    fn loss(&self, outputs: &Vector, targets: &Vector) -> f64;
+
+    fn gradient(&self, outputs: &Vector, targets: &Vector) -> Vector;
 }
 
 pub struct SparseCategoricalCrossentropyLoss;
 
 impl Loss for SparseCategoricalCrossentropyLoss {
-    fn loss(&self, outputs: &Vec<f64>, targets: &Vec<f64>) -> f64 {
+    fn loss(&self, outputs: &Vector, targets: &Vector) -> f64 {
         let mut loss = 0.0;
         for (output, target) in outputs.iter().zip(targets.iter()) {
             loss += target * output.log(0.0);
         }
         -loss
+    }
+
+    fn gradient(&self, outputs: &Vector, targets: &Vector) -> Vector {
+        let mut gradient = Vec::new();
+        for (output, target) in outputs.iter().zip(targets.iter()) {
+            gradient.push(-target / output);
+        }
+        Vector::from(gradient)
     }
 }
