@@ -3,6 +3,8 @@
 This is a simple implementation of an artificial neural network written in Rust. The goal of this project is to learn
 about the inner workings of neural networks and to get a better understanding of the Rust programming language.
 
+The built neural network follows a similar structure to TensorFlow's Keras API.
+
 No libraries are used for the neural network implementation, only the standard library of Rust.
 
 An example using the MNIST dataset is provided to demonstrate the usage of the neural network.
