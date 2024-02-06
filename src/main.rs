@@ -20,10 +20,9 @@ fn main() -> Result<(), Box<dyn Error>> {
         loss: Box::new(nn::loss::SparseCategoricalCrossentropyLoss),
     };
     let mut model = nn::model::SequentialModel::new(model_config);
-    model.add_layer(Box::new(nn::layer::DenseLayer::new(784, Box::new(nn::activation::ReLU)))); // 28 * 28 is already flattened
-    model.add_layer(Box::new(nn::layer::DenseLayer::new(128, Box::new(nn::activation::ReLU))));
-    model.add_layer(Box::new(nn::layer::DenseLayer::new(128, Box::new(nn::activation::ReLU))));
-    model.add_layer(Box::new(nn::layer::DenseLayer::new(10, Box::new(nn::activation::Softmax))));
+    model.add_layer(Box::new(nn::layer::FullyConnectedLayer::new(784, 128, Box::new(nn::activation::ReLU)))); // 28 * 28 is already flattened
+    model.add_layer(Box::new(nn::layer::FullyConnectedLayer::new(128, 128, Box::new(nn::activation::ReLU))));
+    model.add_layer(Box::new(nn::layer::FullyConnectedLayer::new(128, 10, Box::new(nn::activation::Softmax))));
 
     model.fit(&train_dataset, 10, 0.001);
 
