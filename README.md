@@ -19,7 +19,7 @@ downloaded from the following link: [MNIST dataset](https://git-disl.github.io/G
 
 Create a `.env` file in the root directory of the project and add the following content:
 
-```env
+```
 MNIST_TRAIN_DATA="<path to the training data>"
 MNIST_TEST_DATA="<path to the test data>"
 ```
