@@ -1,9 +1,12 @@
+use rand::Rng;
+use crate::nn::activation::Activation;
+use crate::nn::loss::Loss;
+use crate::nn::optimizer::{Optimizer};
 use crate::nn::utils::Vector;
 
 pub struct Neuron {
     weights: Vector,
     bias: f64,
-    weighted_sum: f64,
 }
 
 impl Clone for Neuron {
@@ -11,7 +14,6 @@ impl Clone for Neuron {
         Neuron {
             weights: self.weights.clone(),
             bias: self.bias,
-            weighted_sum: self.weighted_sum,
         }
     }
 }
@@ -19,29 +21,33 @@ impl Clone for Neuron {
 impl Neuron {
     pub(crate) fn new(input_size: usize) -> Neuron {
         let mut weights = Vec::new();
+        let mut rng = rand::thread_rng();
         for _ in 0..input_size {
-            weights.push(rand::random());
+            weights.push(rng.gen_range(-1.0..1.0));
         }
         Neuron {
             weights: Vector::from(weights),
             bias: rand::random(),
-            weighted_sum: 0.0,
         }
     }
 
-    pub(crate) fn forward(&mut self, inputs: &Vector) -> f64 {
-        self.weighted_sum = 0.0;
-        for (weight, input) in self.weights.iter().zip(inputs.iter()) {
-            self.weighted_sum += weight * input;
+    pub(crate) fn forward(&self, inputs: &Vector) -> f64 {
+        let mut weighted_sum = 0.0;
+        if inputs.len() != self.weights.len() {
+            panic!("Input size does not match weight size");
         }
-        self.weighted_sum += self.bias;
-        self.weighted_sum
+        for (input, weight) in inputs.iter().zip(self.weights.iter()) {
+            weighted_sum += input * weight;
+        }
+        weighted_sum += self.bias;
+        weighted_sum
     }
 
-    pub(crate) fn backward(&mut self, loss: &f64, learning_rate: f64) {
-        for weight in self.weights.iter_mut() {
-            *weight -= loss * learning_rate;
+    pub(crate) fn backward(&mut self, neuron_output: &f64, previous_outputs: &Vector, neuron_target: &f64, _optimizer: &Box<dyn Optimizer>, activation: &Box<dyn Activation>, _loss: &Box<dyn Loss>, learning_rate: &f64) {
+        let delta_output = neuron_output - neuron_target;
+        for (i, weight) in self.weights.iter_mut().enumerate() {
+            let gradient = 2.0 * delta_output * activation.derivative(*neuron_output) * previous_outputs[i];
+            *weight -= learning_rate * gradient;
         }
-        self.bias -= loss * learning_rate;
     }
 }
