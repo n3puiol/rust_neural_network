@@ -1,4 +1,4 @@
-use std::ops::{Add, Mul};
+use std::ops::{Add, Index, IndexMut, Mul, Sub};
 use crate::mnist_dataset::MnistRecord;
 
 pub struct DataSet {
@@ -8,10 +8,17 @@ pub struct DataSet {
 
 pub fn normalize(data: &Vec<MnistRecord>) -> DataSet {
     let mut inputs = Vec::new();
-    let mut targets = Vec::new();
 
     for record in data {
-        inputs.push(Vector::from(record.pixels.clone()));
+        let mut input = Vec::new();
+        for pixel in record.pixels.iter() {
+            input.push(*pixel as f64 / 255.0);
+        }
+        inputs.push(Vector::from(input));
+    }
+
+    let mut targets = Vec::new();
+    for record in data {
         let mut target = vec![0.0; 10];
         target[record.label as usize] = 1.0;
         targets.push(Vector::from(target));
@@ -39,6 +46,10 @@ impl Vector {
     pub(crate) fn iter_mut(&mut self) -> std::slice::IterMut<f64> {
         self.data.iter_mut()
     }
+
+    pub(crate) fn len(&self) -> usize {
+        self.data.len()
+    }
 }
 
 impl Clone for Vector {
@@ -46,6 +57,20 @@ impl Clone for Vector {
         Vector {
             data: self.data.clone(),
         }
+    }
+}
+
+impl Index<usize> for Vector {
+    type Output = f64;
+
+    fn index(&self, index: usize) -> &Self::Output {
+        &self.data[index]
+    }
+}
+
+impl IndexMut<usize> for Vector {
+    fn index_mut(&mut self, index: usize) -> &mut f64 {
+        &mut self.data[index]
     }
 }
 
@@ -63,6 +88,24 @@ impl Add for Vector {
             .map(|(&x, &y)| x + y)
             .collect();
 
+        Vector { data: result_data }
+    }
+}
+
+impl Add<f64> for Vector {
+    type Output = Vector;
+
+    fn add(self, scalar: f64) -> Vector {
+        let result_data: Vec<f64> = self.data.iter().map(|&x| x + scalar).collect();
+        Vector { data: result_data }
+    }
+}
+
+impl Sub<f64> for &Vector {
+    type Output = Vector;
+
+    fn sub(self, scalar: f64) -> Vector {
+        let result_data: Vec<f64> = self.data.iter().map(|&x| x - scalar).collect();
         Vector { data: result_data }
     }
 }
