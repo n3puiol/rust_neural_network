@@ -45,21 +45,24 @@ impl Model for SequentialModel {
 
     fn fit(&mut self, data_set: &DataSet, epochs: usize, learning_rate: f64) {
         for epoch in 0..epochs {
-            println!("Epoch {}", epoch);
             let mut loss = 0.0;
+            let mut outputs = Vec::new();
             for (inputs, targets) in data_set.inputs.iter().zip(data_set.targets.iter()) {
-                let mut outputs = inputs.clone();
-                for layer in self.layers.iter_mut() {
-                    outputs = layer.forward(&outputs);
+                outputs.push(inputs.clone());
+                for layer in self.layers.iter() {
+                    let current_output = outputs.last().unwrap();
+                    outputs.push(layer.forward(current_output));
                 }
-                println!("outputs: {:?}", outputs);
-                loss += self.config.loss.loss(&outputs, targets);
-                let loss_gradient = self.config.loss.gradient(&outputs, targets);
-                for layer in self.layers.iter_mut() {
-                    layer.backward(&loss_gradient, learning_rate);
+                loss += self.config.loss.total_loss(outputs.last().unwrap(), targets);
+                for (i, layer) in self.layers.iter_mut().enumerate().rev() {
+                    let current_output = outputs.pop().unwrap();
+                    let previous_output = outputs.last().unwrap();
+                    let layer_targets = if i == 0 { targets } else { previous_output };
+                    layer.backward(&current_output, previous_output, layer_targets, &self.config.optimizer, &self.config.loss, &learning_rate);
                 }
+                outputs.clear();
             }
-            println!("Epoch {}: loss {}", epoch, loss);
+            println!("Epoch {}: loss {}", epoch, loss.round());
         }
     }
 
@@ -67,6 +70,9 @@ impl Model for SequentialModel {
         let mut outputs = input.clone();
         for layer in self.layers.iter_mut() {
             outputs = layer.forward(&outputs);
+        }
+        for output in outputs.iter_mut() {
+            *output = (*output * 100.0).round() / 100.0;
         }
         outputs
     }
